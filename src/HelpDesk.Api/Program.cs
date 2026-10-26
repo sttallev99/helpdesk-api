@@ -39,13 +39,29 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Browser clients served from another origin (e.g. the deployed Angular app). Empty by default:
+// in development the Angular dev server proxies /api, so no CORS is needed.
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+if (corsOrigins.Length > 0)
+{
+    builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
+        .WithOrigins(corsOrigins)
+        .AllowAnyHeader()
+        .AllowAnyMethod()));
+}
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
 
+// Always in Development; elsewhere only when opted in (the Azure deployment sets
+// Database__MigrateOnStartup=true so roles/categories exist in a fresh database).
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+{
     using var scope = app.Services.CreateScope();
     var initializer = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitializer>();
     await initializer.MigrateAsync();
@@ -55,6 +71,11 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
+
+if (corsOrigins.Length > 0)
+{
+    app.UseCors();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
