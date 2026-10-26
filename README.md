@@ -139,6 +139,8 @@ Then update `ConnectionStrings:DefaultConnection` (e.g. via `dotnet user-secrets
 
 A Next.js front end for this API lives in [`../../client`](../../client). It talks to the API only from its server side (Server Components and Server Actions, with the JWT kept in an httpOnly cookie), so no CORS configuration is needed here. It expects the API on `http://localhost:5146` (the `http` launch profile); from the client folder, `npm run dev:all` starts both. See the client's README for details.
 
+An Angular client lives in [`../helpdesk-client`](../helpdesk-client). It calls the API from the browser via the Angular dev server's proxy (`/api` -> `http://localhost:5146`), so it also needs no CORS configuration here. From that folder, `npm run dev:all` starts the API and the client (`http://localhost:4200`).
+
 ## Authentication
 
 - `POST /api/v1/auth/register` - self-service registration; always creates a **Customer**.
