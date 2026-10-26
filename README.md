@@ -141,6 +141,30 @@ A Next.js front end for this API lives in [`../../client`](../../client). It tal
 
 An Angular client lives in [`helpdesk-client`](https://github.com/sttallev99/helpdesk-client). It calls the API from the browser via the Angular dev server's proxy (`/api` -> `http://localhost:5146`), so it also needs no CORS configuration here. Clone it next to this repo (see its README for the expected folder layout); from the client folder, `npm run dev:all` starts the API and the client (`http://localhost:4200`).
 
+## Deployment (Azure)
+
+Live at **https://helpdesk-api-sttallev99.azurewebsites.net** (e.g. `GET /api/v1/categories` returns `401` without a token); the Angular client is at **https://wonderful-coast-071eafc0f.3.azurestaticapps.net**.
+
+| Resource (resource group `rg-helpdesk`) | Plan |
+|---|---|
+| App Service `helpdesk-api-sttallev99` (Linux, .NET 10, Sweden Central) | F1 Free |
+| Azure SQL `helpdesk-sql-sttallev99-swedencentral` / database `helpdesk` | Serverless free offer (auto-pauses when the monthly free limit is used) |
+| Static Web App for the client | Free |
+
+Production configuration lives in App Service settings, never in the repo:
+
+| Setting | Purpose |
+|---|---|
+| Connection string `DefaultConnection` (SQLAzure) | Azure SQL connection |
+| `Jwt__SigningKey` | JWT signing key |
+| `SeedAdmin__Email`, `SeedAdmin__Password` | Production admin account, seeded once |
+| `Database__MigrateOnStartup=true` | Applies migrations and seeds roles/categories on startup outside Development (`Program.cs`) |
+| `Cors__AllowedOrigins__0` | The client's origin |
+
+`.github/workflows/deploy.yml` builds, runs the unit tests, publishes, and deploys on every push to `main` using the `AZURE_WEBAPP_PUBLISH_PROFILE` repository secret. Integration tests aren't run in CI because they need LocalDB.
+
+Free-tier caveats: the database pauses after an hour idle and the F1 app unloads when idle, so the first request after a quiet period can take 30-60 seconds (EF Core's `EnableRetryOnFailure` covers the database resume). F1 also caps CPU at 60 minutes/day.
+
 ## Authentication
 
 - `POST /api/v1/auth/register` - self-service registration; always creates a **Customer**.
