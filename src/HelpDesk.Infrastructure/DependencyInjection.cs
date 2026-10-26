@@ -20,7 +20,11 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
 
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString, sql => sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+            options.UseSqlServer(connectionString, sql => sql
+                .MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
+                // Rides out transient faults, e.g. an auto-paused serverless Azure SQL database
+                // resuming. Safe because no code path opens its own transaction.
+                .EnableRetryOnFailure()));
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
