@@ -34,6 +34,16 @@ public sealed class AddCommentCommandHandler : IRequestHandler<AddCommentCommand
 
     public async Task<TicketCommentDto> Handle(AddCommentCommand request, CancellationToken cancellationToken)
     {
+        var ticket = await _context.Tickets
+            .Include(t => t.History)
+            .Include(t => t.Comments)
+            .FirstOrDefaultAsync(t => t.Id == request.TicketId, cancellationToken);
+
+        if (ticket is null)
+        {
+            throw new NotFoundException(nameof(Ticket), request.TicketId);
+        }
+
         TicketAccessGuard.EnsureVisible(ticket, _currentUser);
 
         if (ticket.Status == TicketStatus.Closed)
