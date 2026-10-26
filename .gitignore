@@ -1,0 +1,26 @@
+# Build artifacts
+bin/
+obj/
+out/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# User secrets (never commit real credentials/keys)
+.env
+*.env
+!.env.example
+
+# Test results
+TestResults/
+*.trx
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local Claude Code settings
+.claude/settings.local.json
